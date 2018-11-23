@@ -13,7 +13,7 @@ function _genericGetter(repoName, uri, process) {
       }
       return process(s);
     }).catch((e) => {
-      console.log(`${repoName}: ${e.message}`);
+      console.error(`${repoName}: ${e.message}`);
     });
 }
 
@@ -27,9 +27,10 @@ function getData(getter, repoName, repoMap) {
 function getClones(repoName) {
   return _genericGetter(repoName, `https://api.github.com/repos/${config.ORGANIZATION}/${repoName}/traffic/clones`, (s) => {
     return  {
-        clones: s.uniques,
-        clonesStart: s.clones && s.clones.length && s.clones[0].timestamp,
-        clonesEnd: new Date(),
+        clones: {
+          uniques: s.uniques,
+          start: s.clones && s.clones.length && s.clones[0].timestamp,
+        }
       };
   });
 }
@@ -37,9 +38,10 @@ function getClones(repoName) {
 function getViews(repoName) {
   return _genericGetter(repoName, `https://api.github.com/repos/${config.ORGANIZATION}/${repoName}/traffic/views`, (s) => {
     return  {
-        views: s.uniques,
-        viewsStart: s.views && s.views.length && s.views[0].timestamp,
-        viewsEnd: new Date(),
+        views: {
+          uniques: s.uniques,
+          start: s.views && s.views.length && s.views[0].timestamp,
+        }
       };
   });
 }
@@ -52,10 +54,9 @@ function getPaths(repoName) {
     return {
       paths: s.map((x) => {
         return {
+          start: twoWeeksAgo,
           path: x.path,
           uniques: x.uniques,
-          pathStart: twoWeeksAgo,
-          pathEnd: today,
         }
       })
     }
@@ -68,12 +69,11 @@ function getReferrers(repoName) {
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const today = new Date();
     return {
+      start: twoWeeksAgo,
       referrers: s.map((x) => {
         return {
           referrer: x.referrer,
           uniques: x.uniques,
-          pathStart: twoWeeksAgo,
-          pathEnd: today,
         }
       })
     }
@@ -134,12 +134,31 @@ function getReleases(repoName) {
   });
 }
 
+function getNpmDownloads (repoName, npmRepoSlug, repos) {
+  const today = new Date();
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  const uri = `https://api.npmjs.org/downloads/point/${twoWeeksAgo.getFullYear()}-${('0' + (twoWeeksAgo.getMonth()+1)).slice(-2) }-${('0' + twoWeeksAgo.getDate()).slice(-2)}:${today.getFullYear()}-${('0' + (today.getMonth()+1)).slice(-2) }-${('0' + today.getDate()).slice(-2)}/${npmRepoSlug}`;
+  return fetch(uri).then((r) => r.json())
+    .then((s) => {
+      return {
+        start: new Date(s.start),
+        downloads: s.downloads,
+      };
+    }).catch((e) => {
+      console.log(`${repoName}: ${e.message}`);
+    });
+}
+
 ////////////////////////////////
 
 async function main () {
-  let repoList = await fetch(`https://api.github.com/orgs/${config.ORGANIZATION}/repos`).then((r) => r.json());
-  const membersList = await fetch(`https://api.github.com/orgs/${config.ORGANIZATION}/members`).then((r) => r.json());
-  repoList = [repoList[4]]; // or 5- wtips
+  let repoList = await fetch(`https://api.github.com/orgs/${config.ORGANIZATION}/repos?type=public`).then((r) => r.json());
+  const membersList = await fetch(`https://api.github.com/orgs/${config.ORGANIZATION}/members`, {
+    headers: {
+      'Authorization': `token ${config.GITHUB_TOKEN}`,
+    }
+  }).then((r) => r.json());
   const promises = [];
   const repos = {};
   repoList
@@ -155,12 +174,31 @@ async function main () {
       promises.push(getData(getViews, r.name, repos));
       promises.push(getData(getPaths, r.name, repos));
       promises.push(getData(getReferrers, r.name, repos));
-      // todo: remove WT members
-      // todo: remove bots
       promises.push(getData(getContributors, r.name, repos));
       promises.push(getData(getReleases, r.name, repos));
-      // npm downloads
     });
+
+  const npmMapping = {
+    // repo: npmhandle
+    'lif-token': '@windingtree/lif-token',
+    'wt-contracts': '@windingtree/wt-contracts',
+    'wt-js-libs': '@windingtree/wt-js-libs',
+    'off-chain-adapter-in-memory': '@windingtree/off-chain-adapter-in-memory',
+    'off-chain-adapter-swarm': '@windingtre/off-chain-adapter-swarm',
+    'off-chain-adapter-http': '@windingtree/off-chain-adapter-http',
+    'wt-ui': '@windingtree/wt-ui',
+    'wt-ui-react': '@windingtree/wt-ui-react',
+  };
+  Object.keys(npmMapping).map((name) => {
+    promises.push(
+      getNpmDownloads(name, npmMapping[name], repos)
+        .then((r) => {
+          repos[name] = Object.assign({}, repos[name], {
+            npm: r
+          });
+        })
+    );
+  })
 
   await Promise.all(promises);
 
