@@ -178,20 +178,9 @@ async function main () {
       promises.push(getData(getReleases, r.name, repos));
     });
 
-  const npmMapping = {
-    // repo: npmhandle
-    'lif-token': '@windingtree/lif-token',
-    'wt-contracts': '@windingtree/wt-contracts',
-    'wt-js-libs': '@windingtree/wt-js-libs',
-    'off-chain-adapter-in-memory': '@windingtree/off-chain-adapter-in-memory',
-    'off-chain-adapter-swarm': '@windingtre/off-chain-adapter-swarm',
-    'off-chain-adapter-http': '@windingtree/off-chain-adapter-http',
-    'wt-ui': '@windingtree/wt-ui',
-    'wt-ui-react': '@windingtree/wt-ui-react',
-  };
-  Object.keys(npmMapping).map((name) => {
+  Object.keys(config.NPM_MAPPING).map((name) => {
     promises.push(
-      getNpmDownloads(name, npmMapping[name], repos)
+      getNpmDownloads(name, config.NPM_MAPPING[name], repos)
         .then((r) => {
           repos[name] = Object.assign({}, repos[name], {
             npm: r
