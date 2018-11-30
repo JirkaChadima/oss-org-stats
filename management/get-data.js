@@ -107,6 +107,14 @@ function getContributors(repoName) {
   });
 }
 
+function getSubscribers(repoName) {
+  return _genericGetter(repoName, `https://api.github.com/repos/${config.ORGANIZATION}/${repoName}/subscribers`, (s) => {
+    return {
+      subscribers: s.length
+    };
+  });
+}
+
 function getReleases(repoName) {
   return _genericGetter(repoName, `https://api.github.com/repos/${config.ORGANIZATION}/${repoName}/releases`, (s) => {
     const twoWeeksAgo = new Date();
@@ -166,11 +174,11 @@ async function main () {
         name: r.name,
         url: r.html_url,
         stargazers: r.stargazers_count,
-        watchers: r.watchers_count,
       }
       promises.push(
         getData(getClones, r.name, repos)
           .then(getData(getContributors, r.name, repos))
+          .then(getData(getSubscribers, r.name, repos))
           .then(() => {
             return getData(getViews, r.name, repos)
               .then(getData(getPaths, r.name, repos))
@@ -188,7 +196,8 @@ async function main () {
       getNpmDownloads(name, config.NPM_MAPPING[name], repos)
         .then((r) => {
           repos[name] = Object.assign({}, repos[name], {
-            npm: r
+            npm: r,
+            name: name,
           });
         })
     );
@@ -198,7 +207,7 @@ async function main () {
 
   console.log(JSON.stringify({
     updatedAt: new Date(),
-    repositories: repos,
+    repositories: Object.values(repos),
     members: membersList.map((u) => {
       return {
         author: u.login,

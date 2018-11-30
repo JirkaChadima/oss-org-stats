@@ -9,7 +9,7 @@
     "build": "react-scripts build",
     "eject": "react-scripts eject",
     "import-data": "npm run get-data && npm run generate-index",
-    "get-data": "node management/get-data.js > public/data/`date --iso-8601=minutes`.json",
+    "get-data": "node management/get-data.js > public/data/`date -u --iso-8601=minutes | cut -d '+' -f 1`.json",
     "generate-index": "node management/create-index.js > src/assets/list.json"
   },
   "author": "Jirka Chadima <chadima.jiri@gmail.com>",

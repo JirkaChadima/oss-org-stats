@@ -11,7 +11,10 @@ import {
   Label,
 } from 'reactstrap';
 
+import Dashboard from './components/Dashboard';
 import list from './assets/list';
+
+const sortedList = list.sort((a, b) => a.name < b.name ? 1 : -1);
 
 class App extends Component {
   state = {
@@ -20,11 +23,19 @@ class App extends Component {
 
   constructor(props) {
     super(props);
+    this.fetchDataSource = this.fetchDataSource.bind(this);
     this.onDataSourceChange = this.onDataSourceChange.bind(this);
   }
 
-  onDataSourceChange (e) {
-    fetch(e.target.value)
+  componentWillMount() {
+    const { datasource } = this.props;
+    if (!datasource) {
+      this.fetchDataSource(sortedList[0].link);
+    }
+  }
+
+  fetchDataSource (link) {
+    fetch(link)
       .then((d) => d.json())
       .then((d) => {
         this.setState({
@@ -33,9 +44,13 @@ class App extends Component {
       });
   }
 
+  onDataSourceChange (e) {
+    this.fetchDataSource(e.target.value);
+  }
+
   render() {
     const { datasource } = this.state;
-    const options = list.map((l) => {
+    const options = sortedList.map((l) => {
       return (<option key={l.name} value={l.link}>{l.name}</option>);
     });
     return (
@@ -46,7 +61,7 @@ class App extends Component {
           <NavItem>
             <Form inline>
               <FormGroup>
-                <Label className="mr-sm-2" for="datasource">Source</Label>
+                <Label className="mr-sm-2" for="datasource">Source (UTC times)</Label>
                 <Input type="select" name="datasource" id="datasource" onChange={this.onDataSourceChange}>
                 {options}
                 </Input>
@@ -57,7 +72,7 @@ class App extends Component {
         </Navbar>
         <div>
         {! datasource && (<Alert color="info">Select data source first.</Alert>)}
-        {datasource && (<p>BODY HERE {JSON.stringify(datasource)}</p>)}
+        {datasource && (<Dashboard datasource={datasource} />)}
         </div>
       </div>
     );
