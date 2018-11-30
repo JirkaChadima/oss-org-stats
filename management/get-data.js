@@ -12,8 +12,6 @@ function _genericGetter(repoName, uri, process) {
         throw new Error(s.message);
       }
       return process(s);
-    }).catch((e) => {
-      console.error(`${repoName}: ${e.message}`);
     });
 }
 
@@ -170,12 +168,19 @@ async function main () {
         stargazers: r.stargazers_count,
         watchers: r.watchers_count,
       }
-      promises.push(getData(getClones, r.name, repos));
-      promises.push(getData(getViews, r.name, repos));
-      promises.push(getData(getPaths, r.name, repos));
-      promises.push(getData(getReferrers, r.name, repos));
-      promises.push(getData(getContributors, r.name, repos));
-      promises.push(getData(getReleases, r.name, repos));
+      promises.push(
+        getData(getClones, r.name, repos)
+          .then(getData(getContributors, r.name, repos))
+          .then(() => {
+            return getData(getViews, r.name, repos)
+              .then(getData(getPaths, r.name, repos))
+              .then(getData(getReferrers, r.name, repos))
+              .then(getData(getReleases, r.name, repos))
+          }).catch((e) => {
+            console.error(`${r.name}: ${e.message}`);
+            console.trace(e);
+          })
+      );
     });
 
   Object.keys(config.NPM_MAPPING).map((name) => {
@@ -192,6 +197,7 @@ async function main () {
   await Promise.all(promises);
 
   console.log(JSON.stringify({
+    updatedAt: new Date(),
     repositories: repos,
     members: membersList.map((u) => {
       return {
@@ -200,6 +206,7 @@ async function main () {
       };
     }),
   }));
+
 }
 
 main();
