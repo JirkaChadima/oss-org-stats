@@ -1,4 +1,5 @@
 config.json
 config.js
 node_modules
-data/*.json
+public/data/*.json
+src/assets/list.json

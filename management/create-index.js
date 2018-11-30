@@ -1,7 +1,7 @@
 const fs = require('fs'),
   path = require('path');
 
-const dataFolder = path.resolve(__dirname, '../data/'),
+const dataFolder = path.resolve(__dirname, '../public/data/'),
   links = [];
 
 const files = fs.readdirSync(dataFolder);

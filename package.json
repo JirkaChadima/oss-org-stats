@@ -8,8 +8,9 @@
     "start": "BROWSER=none react-scripts start",
     "build": "react-scripts build",
     "eject": "react-scripts eject",
-    "get-data": "node management/get-data.js > data/`date --iso-8601=minutes`.json",
-    "generate-index": "node management/create-index.js > data/list.json"
+    "import-data": "npm run get-data && npm run generate-index",
+    "get-data": "node management/get-data.js > public/data/`date --iso-8601=minutes`.json",
+    "generate-index": "node management/create-index.js > src/assets/list.json"
   },
   "author": "Jirka Chadima <chadima.jiri@gmail.com>",
   "license": "MIT",
