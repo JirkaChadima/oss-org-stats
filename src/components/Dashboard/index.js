@@ -10,6 +10,12 @@ import {
   Table,
 } from 'reactstrap';
 
+const formatDate = (date) => {
+  const dDate = new Date(date);
+  return dDate.getFullYear() + '-'
+    + ('0' + (dDate.getMonth()+1)).slice(-2) + '-'
+    + ('0' + dDate.getDate()).slice(-2);
+}
 
 const Dashboard = ({ datasource }) => {
     const globalStats = [
@@ -34,16 +40,6 @@ const Dashboard = ({ datasource }) => {
         metric: (d) => d.repositories.reduce((acc, r) => acc + (r.stargazers || 0), 0),
       },
       {
-        id: "total-clones",
-        name: () => "Total clones since TODO",
-        metric: (d) => d.repositories.reduce((acc, r) => acc + ((r.clones && r.clones.uniques) || 0), 0),
-      },
-      {
-        id: "total-npm",
-        name: (d) => `Total NPM downloads since TODO`,
-        metric: (d) => d.repositories.reduce((acc, r) => acc + ((r.npm && r.npm.downloads) || 0), 0),
-      },
-      {
         id: "total-outside-contributors",
         name: (d) => `Total number of outside contributors`,
         metric: (d) => d.repositories
@@ -60,12 +56,53 @@ const Dashboard = ({ datasource }) => {
           .filter((v, i, self) => self.indexOf(v) === i)
           .length,
       },
+      {
+        id: "total-clones",
+        name: (d) => {
+          const since = d.repositories
+            .map((r) => (r.clones && r.clones.start))
+            .filter((r) => r)
+            .sort((a, b) => new Date(a) < new Date(b) ? -1 : 1)
+            .slice(0, 1);
+          return `Total clones since ${formatDate(since)}`
+        },
+        metric: (d) => d.repositories.reduce((acc, r) => acc + ((r.clones && r.clones.uniques) || 0), 0),
+      },
+      {
+        id: "total-npm",
+        name: (d) => {
+          const since = d.repositories
+            .map((r) => (r.npm && r.npm.start))
+            .filter((r) => r)
+            .sort((a, b) => new Date(a) < new Date(b) ? -1 : 1)
+            .slice(0, 1);
+          return `Total NPM downloads since ${formatDate(since)}`
+        },
+        metric: (d) => d.repositories.reduce((acc, r) => acc + ((r.npm && r.npm.downloads) || 0), 0),
+      },
     ];
 
     const rankingStats = [
       {
         id: "most-visited-paths",
-        name: (d) => `10 Most visited paths since TODO`,
+        name: (d) => {
+          const since = d.repositories
+            .map((r) => {
+              if (r.paths) {
+                return r.paths.reduce((acc, c) => {
+                  if (!acc || new Date(c.start) < acc) {
+                    return new Date(c.start);
+                  }
+                  return acc;
+                }, null);
+              }
+              return null;
+            })
+            .filter((r) => r)
+            .sort((a, b) => a < b ? -1 : 1)
+            .slice(0, 1);
+          return `10 Most visited paths since ${formatDate(since)}`;
+        },
         headers: (d) => (['Path', 'Unique visitors']),
         metric: (d) => d.repositories
           .reduce((acc, r) => {
@@ -83,7 +120,24 @@ const Dashboard = ({ datasource }) => {
       },
       {
         id: "referrers",
-        name: (d) => `10 Biggest referrers since TODO`,
+        name: (d) => {
+          const since = d.repositories
+            .map((r) => {
+              if (r.referrers) {
+                return r.referrers.reduce((acc, c) => {
+                  if (!acc || new Date(c.start) < acc) {
+                    return new Date(c.start);
+                  }
+                  return acc;
+                }, null);
+              }
+              return null;
+            })
+            .filter((r) => r)
+            .sort((a, b) => a < b ? -1 : 1)
+            .slice(0, 1);
+          return `10 Biggest referrers since ${formatDate(since)}`
+        },
         headers: (d) => (['Referrer', 'Unique visitors']),
         metric: (d) => {
           const set = d.repositories
@@ -113,8 +167,25 @@ const Dashboard = ({ datasource }) => {
           }
       },
       {
-        id: "external-contributors",
-        name: (d) => `10 Biggest external contributors since TODO`,
+        id: "contributors",
+        name: (d) => {
+          const since = d.repositories
+            .reduce((acc, r) => {
+              if (r.contributors) {
+                return r.contributors.reduce((lowest, c) => {
+                  if (c.lastTwoWeeks) {
+                    const start = new Date(c.lastTwoWeeks[0].start) < new Date(c.lastTwoWeeks[1].start) ? new Date(c.lastTwoWeeks[0].start) : new Date(c.lastTwoWeeks[1].start);
+                    if (!lowest || new Date(start) < lowest) {
+                      return new Date(start);
+                    }
+                  }
+                  return lowest;
+                }, acc);
+              }
+              return acc;
+            }, null);
+          return `20 Biggest contributors since ${formatDate(since)}`;
+        },
         headers: (d) => (['Contributor', 'Number of commits', 'Additions', 'Deletions']),
         metric: (d) => {
           const set = d.repositories
@@ -132,7 +203,6 @@ const Dashboard = ({ datasource }) => {
                       return true;
                     });
                   }
-
                   if (acc[x.author]) {
                     acc[x.author] = Object.assign(acc[x.author], {
                       commits: acc[x.author].commits + commits,
@@ -156,10 +226,9 @@ const Dashboard = ({ datasource }) => {
 
           return Object.values(set)
             .filter((a) => a.commits > 0)
-            .filter((a) => d.members.find((x) => x.author === a.author) === undefined)
             .filter((a) => !(/\[bot\]/).test(a.author))
             .sort((a, b) => a.commits < b.commits ? 1 : -1)
-            .slice(0, 10)
+            .slice(0, 20)
             .map((a) => ([
               (<a href={a.url}>{a.author}</a>),
               a.commits,
