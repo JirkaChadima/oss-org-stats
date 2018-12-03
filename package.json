@@ -14,7 +14,6 @@
     "get-data": "node management/get-data.js > public/data/`date -u --iso-8601=minutes | cut -d '+' -f 1`.json",
     "generate-index": "node management/create-index.js > src/assets/list.json"
   },
-  "homepage": "https://windintree.github.io/oss-org-stats/",
   "author": "Jirka Chadima <chadima.jiri@gmail.com>",
   "license": "MIT",
   "dependencies": {
