@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {
   Alert,
+  Container,
   Navbar,
   NavbarBrand,
   Nav,
@@ -70,10 +71,10 @@ class App extends Component {
             </NavItem>
           </Nav>
         </Navbar>
-        <div>
-        {! datasource && (<Alert color="info">Select data source first.</Alert>)}
-        {datasource && (<Dashboard datasource={datasource} />)}
-        </div>
+        <Container className="mt-2">
+          {! datasource && (<Alert color="info">Select data source first.</Alert>)}
+          {datasource && (<Dashboard datasource={datasource} />)}
+        </Container>
       </div>
     );
   }

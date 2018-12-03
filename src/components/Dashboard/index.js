@@ -1,4 +1,14 @@
 import React from "react";
+import {
+  Col,
+  Row,
+  Card,
+  CardDeck,
+  CardText,
+  CardBody,
+  CardTitle,
+} from 'reactstrap';
+
 
 const Dashboard = ({ datasource }) => {
     const globalStats = [
@@ -55,16 +65,29 @@ const Dashboard = ({ datasource }) => {
     const rankings = [
       // most visited paths
       // most incoming traffic from
+      // biggest contributors
     ];
     
     const globals = globalStats.map((n) => {
-      return (<p key={n.id}>{n.name(datasource)} {n.metric(datasource)}</p>);
+      return (
+        <Col sm="4" key={n.id} className="mb-sm-4">
+          <Card>
+            <CardBody>
+              <CardTitle>{n.metric(datasource)}</CardTitle>
+              <CardText>{n.name(datasource)}</CardText>
+            </CardBody>
+          </Card>
+        </Col>
+      );
     })
 
     return (
-      <div>
-        {globals}
-      </div>
+      <Row>
+        <h1 className="mx-2">Global numbers</h1>
+        <CardDeck>
+          {globals}
+        </CardDeck>
+      </Row>
     );
 }
 
