@@ -31,7 +31,7 @@ class App extends Component {
   componentWillMount() {
     const { datasource } = this.props;
     if (!datasource) {
-      this.fetchDataSource(sortedList[0].link);
+      this.fetchDataSource(`${process.env.PUBLIC_URL}${sortedList[0].link}`);
     }
   }
 
