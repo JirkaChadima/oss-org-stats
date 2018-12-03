@@ -1,4 +1,5 @@
 const fetch = require('node-fetch');
+const parseLinkHeader = require('parse-link-header');
 const config = require('../config');
 
 function _genericGetter(repoName, uri, process) {
@@ -67,9 +68,9 @@ function getReferrers(repoName) {
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const today = new Date();
     return {
-      start: twoWeeksAgo,
       referrers: s.map((x) => {
         return {
+          start: twoWeeksAgo,
           referrer: x.referrer,
           uniques: x.uniques,
         }
@@ -80,6 +81,9 @@ function getReferrers(repoName) {
 
 function getContributors(repoName) {
   return _genericGetter(repoName, `https://api.github.com/repos/${config.ORGANIZATION}/${repoName}/stats/contributors`, (s) => {
+    if (!s) {
+      return {};
+    }
     const twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     return {
@@ -157,14 +161,32 @@ function getNpmDownloads (repoName, npmRepoSlug, repos) {
 }
 
 ////////////////////////////////
+function fetchRepos (url) {
+  return fetch(url)
+    .then((r) => {
+      if (r.headers.get('link')) {
+        const links = parseLinkHeader(r.headers.get('link'));
+        if (links.next) {
+          return fetchRepos(links.next.url)
+            .then(async (s) => {
+              return s.concat(await r.json());
+            });
+        }
+      }
+      return r.json();
+    });
+}
+
 
 async function main () {
-  let repoList = await fetch(`https://api.github.com/orgs/${config.ORGANIZATION}/repos?type=public`).then((r) => r.json());
+  let repoList = await fetchRepos(`https://api.github.com/orgs/${config.ORGANIZATION}/repos?type=public`);
+
   const membersList = await fetch(`https://api.github.com/orgs/${config.ORGANIZATION}/members`, {
     headers: {
       'Authorization': `token ${config.GITHUB_TOKEN}`,
     }
   }).then((r) => r.json());
+
   const promises = [];
   const repos = {};
   repoList

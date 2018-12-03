@@ -262,7 +262,7 @@ const Dashboard = ({ datasource }) => {
       });
       return (
         <Col key={n.name(datasource)}>
-          <h2>{n.name(datasource)}</h2>
+          <strong>{n.name(datasource)}</strong>
           <Table bordered striped responsive hover>
             <thead>
               <tr>{headers}</tr>
