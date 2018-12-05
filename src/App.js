@@ -31,12 +31,12 @@ class App extends Component {
   componentWillMount() {
     const { datasource } = this.props;
     if (!datasource) {
-      this.fetchDataSource(`${process.env.PUBLIC_URL}${sortedList[0].link}`);
+      this.fetchDataSource(sortedList[0].link);
     }
   }
 
   fetchDataSource (link) {
-    fetch(link)
+    fetch(`${process.env.PUBLIC_URL}${link}`)
       .then((d) => d.json())
       .then((d) => {
         this.setState({
