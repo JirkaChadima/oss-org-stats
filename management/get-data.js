@@ -13,6 +13,9 @@ function _genericGetter(repoName, uri, process) {
         throw new Error(s.message);
       }
       return process(s);
+    })
+    .catch((e) => {
+      console.warn(`Cannot get ${uri}: ${e}`);
     });
 }
 
