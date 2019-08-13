@@ -173,8 +173,13 @@ const Dashboard = ({ datasource }) => {
             .reduce((acc, r) => {
               if (r.contributors) {
                 return r.contributors.reduce((lowest, c) => {
-                  if (c.lastTwoWeeks) {
-                    const start = new Date(c.lastTwoWeeks[0].start) < new Date(c.lastTwoWeeks[1].start) ? new Date(c.lastTwoWeeks[0].start) : new Date(c.lastTwoWeeks[1].start);
+                  if (c.lastTwoWeeks && c.lastTwoWeeks.length) {
+                    let start;
+                    if (c.lastTwoWeeks.length === 2) {
+                      start = new Date(c.lastTwoWeeks[0].start) < new Date(c.lastTwoWeeks[1].start) ? new Date(c.lastTwoWeeks[0].start) : new Date(c.lastTwoWeeks[1].start);
+                    } else {
+                      start = new Date(c.lastTwoWeeks[0].start);
+                    }
                     if (!lowest || new Date(start) < lowest) {
                       return new Date(start);
                     }
