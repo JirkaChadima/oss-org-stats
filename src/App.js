@@ -28,7 +28,7 @@ class App extends Component {
     this.onDataSourceChange = this.onDataSourceChange.bind(this);
   }
 
-  componentWillMount() {
+  componentDidMount() {
     const { datasource } = this.props;
     if (!datasource) {
       this.fetchDataSource(sortedList[0].link);
