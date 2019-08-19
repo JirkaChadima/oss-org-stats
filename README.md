@@ -41,6 +41,6 @@ $ docker build -t oss-org-stats .
 $ docker run \
   -e REPO_HTTPS_ADDRESS=https://12345-github-token@github.com/organization/oss-org-stats.git \
   -e PUBLISHER_EMAIL= chadima.jiri@gmail.com \
-  -e PUBLISHER_NAME= jirkachadima \
+  -e PUBLISHER_USERNAME= jirkachadima \
   oss-org-stats
 ```
